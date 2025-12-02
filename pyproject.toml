@@ -1,11 +1,14 @@
 [project]
-name = "projet-semestre"
+name = "xai-on-the-wall"
 version = "0.1.0"
-description = "ISC-302 Data Computation"
+description = "XAI on the wall, who is the explainer of them all?"
 readme = "README.md"
 requires-python = ">=3.13"
 dependencies = [
     "gradio>=6.0.1",
     "jupyter>=1.1.1",
+    "matplotlib>=3.10.7",
+    "scikit-learn>=1.7.2",
+    "torch>=2.9.1",
     "wandb>=0.23.0",
 ]
