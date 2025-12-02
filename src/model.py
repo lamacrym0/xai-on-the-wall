@@ -17,6 +17,10 @@ class NN(nn.Module):
     def forward(self, x):
         x = self.model(x)
         return x
+    def predict(self, x):
+        self.eval()
+        with torch.no_grad():
+            return self.forward(x)
 
 def build_model(input_size):
 

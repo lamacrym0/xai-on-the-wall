@@ -3,7 +3,7 @@ import numpy as np
 import torch
 import torch.nn as nn
 import torch.optim as optim
-from sklearn.datasets import load_breast_cancer
+
 from sklearn.model_selection import train_test_split
 
 from config import NUM_EPOCHS, LEARNING_RATE, RANDOM_SEED, TEST_SPLIT, VAL_SPLIT
@@ -13,8 +13,7 @@ from model import build_model
 project = "xai-on-the-wall"
 
 
-def prepare_data(test_split=TEST_SPLIT, val_split=VAL_SPLIT, random_seed=RANDOM_SEED):
-    X, y = load_breast_cancer(return_X_y=True)
+def prepare_data(X,y,test_split=TEST_SPLIT, val_split=VAL_SPLIT, random_seed=RANDOM_SEED):
     X = preprocess_data(X)
 
     X_temp, X_test, y_temp, y_test = train_test_split(
@@ -43,18 +42,27 @@ def prepare_data(test_split=TEST_SPLIT, val_split=VAL_SPLIT, random_seed=RANDOM_
         "y_train": y_train,
         "X_val": X_val_tensor,
         "y_val": y_val_tensor,
-        "X_test": X_test_tensor,
-        "y_test": y_test_tensor,
+        "X_test_tensor": X_test_tensor,
+        "y_test_tensor": y_test_tensor,
+        "X_test": X_test,
+        "y_test": y_test,
         "input_size": input_size,
         "target_labels": target_labels,
     }
 
 
-def train(epochs=NUM_EPOCHS, lr=LEARNING_RATE, model=None):
-    data = prepare_data()
+def train(X,y,epochs=NUM_EPOCHS, lr=LEARNING_RATE, model=None):
+    data = prepare_data(X, y)
     print(f"Target labels: {data['target_labels']}")
     if model is None:
-        model = build_model(input_size=data["input_size"])
+        model = nn.Sequential(
+            nn.Linear(data["input_size"], 16),
+            nn.ReLU(),
+            nn.Linear(16, 8),
+            nn.ReLU(),
+            nn.Linear(8, 1),
+            nn.Sigmoid()
+        )
 
     wandb.login()
     config = {"epochs": epochs, "lr": lr}

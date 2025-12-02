@@ -1,0 +1,11 @@
+seed: 42 # Set to None or random for random seed, or an integer for a fixed seed, if removed it will be 42
+
+ga:
+  pop_size: 100
+  generations: 200
+  cx_prob: 0.5
+  mut_prob: 0.3
+  max_conditions: 3
+  max_rules: 8
+  log_csv: "ga_best_by_gen.csv"
+  operators: ["<=", ">", "<", ">=", "=="] # Operators for rule conditions, if None, all operators are used

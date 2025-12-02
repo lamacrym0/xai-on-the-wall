@@ -453,6 +453,21 @@ wheels = [
 ]
 
 [[package]]
+name = "deap"
+version = "1.4.3"
+source = { registry = "https://pypi.org/simple" }
+dependencies = [
+    { name = "numpy" },
+]
+sdist = { url = "https://files.pythonhosted.org/packages/c9/37/3a3d82ca07e9eb2d8cdc1979ff82add35f1b41988c984db53ae582959c13/deap-1.4.3.tar.gz", hash = "sha256:7c97088fb05835bdc255bec475cb0e778de2b43e44cbefbf2bcd655aeec865fd", size = 1072325, upload-time = "2025-05-04T12:26:15.237Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/f1/d0/768fd1a9f9bc026574b8796bfb2e26913e7ce386db1de76008e00ba108da/deap-1.4.3-cp313-cp313-macosx_10_13_universal2.whl", hash = "sha256:7358b56bd921897304f0adafe57363628807c10b8ad2e6b9e9d104c26fcb47b8", size = 111291, upload-time = "2025-05-04T12:26:18.846Z" },
+    { url = "https://files.pythonhosted.org/packages/c4/49/e5bc5231b0753b4b79df321f9a9013fad98066daf6bcc17ce5244b2cbd58/deap-1.4.3-cp313-cp313-manylinux_2_17_aarch64.manylinux2014_aarch64.whl", hash = "sha256:8451c9856bf717dae31f8ef282f15f8230ecf8589fea2b1bc845ac178747645b", size = 135736, upload-time = "2025-05-04T12:30:40.042Z" },
+    { url = "https://files.pythonhosted.org/packages/7d/fe/fc9d6426e268036de4740d046bb53430032fef58ea1a4affd07cf5eae642/deap-1.4.3-cp313-cp313-manylinux_2_5_x86_64.manylinux1_x86_64.manylinux_2_17_x86_64.manylinux2014_x86_64.whl", hash = "sha256:7b56cc88b7129332796489eb42f12f1a450ae6112722158a17b5a39c20d72ceb", size = 135908, upload-time = "2025-05-04T12:31:08.992Z" },
+    { url = "https://files.pythonhosted.org/packages/9a/69/053e5e900a47280b4aaabed4af5fea522ed0c6badb854581050c614582d4/deap-1.4.3-cp313-cp313-win_amd64.whl", hash = "sha256:265fea2c4bc8b93871444721e4a4d96476ac2f5ff7a704140fa9be8112240d8d", size = 109791, upload-time = "2025-05-04T12:28:27.943Z" },
+]
+
+[[package]]
 name = "debugpy"
 version = "1.8.17"
 source = { registry = "https://pypi.org/simple" }
@@ -2825,6 +2840,7 @@ name = "xai-on-the-wall"
 version = "0.1.0"
 source = { virtual = "." }
 dependencies = [
+    { name = "deap" },
     { name = "dill" },
     { name = "gradio" },
     { name = "jupyter" },
@@ -2837,6 +2853,7 @@ dependencies = [
 
 [package.metadata]
 requires-dist = [
+    { name = "deap", specifier = ">=1.4.3" },
     { name = "dill", specifier = ">=0.4.0" },
     { name = "gradio", specifier = ">=6.0.1" },
     { name = "jupyter", specifier = ">=1.1.1" },
