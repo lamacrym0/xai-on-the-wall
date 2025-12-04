@@ -3,7 +3,7 @@ name = "xai-on-the-wall"
 version = "0.1.0"
 description = "XAI on the wall, who is the explainer of them all?"
 readme = "README.md"
-requires-python = ">=3.13"
+requires-python = ">=3.12"
 dependencies = [
     "deap>=1.4.3",
     "dill>=0.4.0",
