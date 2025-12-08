@@ -1,7 +1,7 @@
 import random, copy, csv
 import numpy as np
 from deap import base, creator, tools, algorithms
-from dexire_exo.operators import OperatorSet
+from dexire_evo.operators import OperatorSet
 
 class GAEngine:
     """

@@ -1,3 +1,4 @@
+import model
 import wandb
 import numpy as np
 import torch
@@ -15,7 +16,6 @@ project = "xai-on-the-wall"
 
 def prepare_data(X,y,test_split=TEST_SPLIT, val_split=VAL_SPLIT, random_seed=RANDOM_SEED):
     X = preprocess_data(X)
-
     X_temp, X_test, y_temp, y_test = train_test_split(
         X, y, test_size=test_split, random_state=random_seed, stratify=y
     )
@@ -51,65 +51,75 @@ def prepare_data(X,y,test_split=TEST_SPLIT, val_split=VAL_SPLIT, random_seed=RAN
     }
 
 
-def train(X,y,epochs=NUM_EPOCHS, lr=LEARNING_RATE, model=None):
+def train(X,y,epochs=NUM_EPOCHS, lr=LEARNING_RATE, model=None,save=False,model_state=None):
     data = prepare_data(X, y)
-    print(f"Target labels: {data['target_labels']}")
+    device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     if model is None:
-        model = nn.Sequential(
-            nn.Linear(data["input_size"], 16),
-            nn.ReLU(),
-            nn.Linear(16, 8),
-            nn.ReLU(),
-            nn.Linear(8, 1),
-            nn.Sigmoid()
-        )
-
-    wandb.login()
-    config = {"epochs": epochs, "lr": lr}
-
-    with wandb.init(project=project, config=config) as run:
-        print(f"lr: {config['lr']}")
-        
-        criterion = nn.BCELoss()
-        optimizer = optim.Adam(model.parameters(), lr=lr)
-
-        X_train = data["X_train_tensor"]
-        y_train = data["y_train_tensor"]
-        X_val = data["X_val"]
-        y_val = data["y_val"]
-
-        for epoch in range(epochs):
-            model.train()
-            optimizer.zero_grad()
-            output = model(X_train)
-            loss = criterion(output, y_train)
-            loss.backward()
-            optimizer.step()
-
-            with torch.no_grad():
-                train_preds = (output > 0.5).float()
-                train_acc = (train_preds == y_train).float().mean()
-
-            model.eval()
-            with torch.no_grad():
-                val_output = model(X_val)
-                val_loss = criterion(val_output, y_val)
-                val_preds = (val_output > 0.5).float()
-                val_acc = (val_preds == y_val).float().mean()
-
-            print(
-                f"Epoch {epoch+1:02d} | "
-                f"Loss: {loss.item():.4f} | Acc: {train_acc.item():.4f} | "
-                f"Val Loss: {val_loss.item():.4f} | Val Acc: {val_acc.item():.4f}"
+            model = nn.Sequential(
+                nn.Linear(data["input_size"], 16),
+                nn.ReLU(),
+                nn.Linear(16, 8),
+                nn.ReLU(),
+                nn.Linear(8, 1),
+                nn.Sigmoid()
             )
+            model.to(device)
+    if( model_state is None):
+        print(f"Target labels: {data['target_labels']}")
 
-            if run is not None:
-                run.log(
-                    {
-                        "Train Loss": loss.item(),
-                        "Train Accuracy": train_acc.item(),
-                        "Val Loss": val_loss.item(),
-                        "Val Accuracy": val_acc.item(),
-                    }
+        wandb.login()
+        config = {"epochs": epochs, "lr": lr}
+
+        with wandb.init(project=project, config=config) as run:
+            print(f"lr: {config['lr']}")
+            
+            criterion = nn.BCELoss()
+            optimizer = optim.Adam(model.parameters(), lr=lr)
+
+            X_train = data["X_train_tensor"]
+            y_train = data["y_train_tensor"]
+            X_val = data["X_val"]
+            y_val = data["y_val"]
+
+            for epoch in range(epochs):
+                model.train()
+                optimizer.zero_grad()
+                output = model(X_train)
+                loss = criterion(output, y_train)
+                loss.backward()
+                optimizer.step()
+
+                with torch.no_grad():
+                    train_preds = (output > 0.5).float()
+                    train_acc = (train_preds == y_train).float().mean()
+
+                model.eval()
+                with torch.no_grad():
+                    val_output = model(X_val)
+                    val_loss = criterion(val_output, y_val)
+                    val_preds = (val_output > 0.5).float()
+                    val_acc = (val_preds == y_val).float().mean()
+
+                print(
+                    f"Epoch {epoch+1:02d} | "
+                    f"Loss: {loss.item():.4f} | Acc: {train_acc.item():.4f} | "
+                    f"Val Loss: {val_loss.item():.4f} | Val Acc: {val_acc.item():.4f}"
                 )
+
+                if run is not None:
+                    run.log(
+                        {
+                            "Train Loss": loss.item(),
+                            "Train Accuracy": train_acc.item(),
+                            "Val Loss": val_loss.item(),
+                            "Val Accuracy": val_acc.item(),
+                        }
+                    )
+
+            if save:
+                torch.save(model.state_dict(), "model.pth")
+                print("Model saved to model.pth")
+    else:
+        state_dict = torch.load(model_state, map_location=device)
+        model.load_state_dict(state_dict)
     return model, data

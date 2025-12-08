@@ -1,10 +1,10 @@
-from dexire_exo.ga_engine import GAEngine
-from dexire_exo.rule_formatter import format_if_elif_else
+from dexire_evo.ga_engine import GAEngine
+from dexire_evo.rule_formatter import format_if_elif_else
 from sklearn.metrics import accuracy_score, classification_report
 from src.config import Config
 from src.model_adapter import ModelAdapter
 
-def get_dexire_exo_rules(feature_names, model, data):
+def get_dexire_evo_rules(feature_names, model, data):
     config = Config("config.yaml")
 
     model_adapter = ModelAdapter(model)

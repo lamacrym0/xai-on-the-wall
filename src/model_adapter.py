@@ -5,12 +5,13 @@ import torch
 
 class ModelAdapter:
     """
-    Make a PyTorch model look like an sklearn classifier for DexiRE-Exo:
-    - .predict(X) -> class labels (0/1 for binary, 0..K-1 for multi-class)
+    Adapter for a single-output sigmoid PyTorch model.
+    Exposes .predict(X) -> 0/1 labels.
     """
 
-    def __init__(self, model, device=None):
+    def __init__(self, model, device=None, threshold=0.5):
         self.model = model
+        self.threshold = threshold
         self.device = device or torch.device(
             "cuda" if torch.cuda.is_available() else "cpu"
         )
@@ -29,12 +30,15 @@ class ModelAdapter:
 
     def predict(self, X):
         """
-        Returns integer class labels (argmax over the second dim).
+        Returns binary labels (0/1) by thresholding the model's sigmoid output.
         """
         self.model.eval()
         with torch.no_grad():
             X_tensor = self._to_tensor(X)
-            logits = self.model(X_tensor)          
-            labels = torch.argmax(logits, dim=1)  
+            y = self.model(X_tensor)         # shape (N, 1) with Sigmoid
+            y = y.view(-1)                   # shape (N,)
 
-        return labels.detach().cpu().numpy()
+        probs = y.detach().cpu().numpy()
+        labels = (probs >= self.threshold).astype(int)  # 0 or 1
+
+        return labels
