@@ -35,8 +35,8 @@ class ModelAdapter:
         self.model.eval()
         with torch.no_grad():
             X_tensor = self._to_tensor(X)
-            y = self.model(X_tensor)         # shape (N, 1) with Sigmoid
-            y = y.view(-1)                   # shape (N,)
+            y = self.model(X_tensor)      
+            y = y.view(-1)                  
 
         probs = y.detach().cpu().numpy()
         labels = (probs >= self.threshold).astype(int)  # 0 or 1
