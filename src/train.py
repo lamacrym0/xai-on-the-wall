@@ -54,9 +54,10 @@ def prepare_data(X,y,test_split=TEST_SPLIT, val_split=VAL_SPLIT, random_seed=RAN
 def train(X,y,epochs=NUM_EPOCHS, lr=LEARNING_RATE, model=None,save=False,model_state=None):
     data = prepare_data(X, y)
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+    input_size = data["input_size"]
     if model is None:
             model = nn.Sequential(
-                nn.Linear(data["input_size"], 16),
+                nn.Linear(input_size, 16),
                 nn.ReLU(),
                 nn.Linear(16, 8),
                 nn.ReLU(),

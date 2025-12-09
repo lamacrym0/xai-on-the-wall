@@ -4,7 +4,7 @@ import numpy as np
 import pandas as pd
 import torch
 
-def get_explainer_CIU(model, data,output_names, feature_names):
+def get_explainer_CIU(model, data,output_names, feature_names = None):
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     model.to(device).eval()   
     def torch_predict(X):
