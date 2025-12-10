@@ -33,6 +33,9 @@ def run_explanations_for_specific_instance(test_index, model, data, feature_name
 
     res = get_ciu_instance(CIU_model, X_test_df.iloc[[idx]])
     ciu_plot_out = CIU_model.plot_ciu(res, figsize=(9, 6))
+    ciu_plot_out.subplots_adjust(left=0.25)
+    ax = ciu_plot_out.axes[0] 
+    ax.set_xlim(0, 0.25)
 
     return ciu_plot_out
 
@@ -88,24 +91,26 @@ def run_explanations(
     model.eval()
 
     # --- DexiRE ---
-    dexire_out = get_dexire_rules(model, data, feature_names=feature_names)
+    dexire_out,feature_counts = get_dexire_rules(model, data, feature_names=feature_names)
 
+    dexire_count_out = ""
+    for feat, count in feature_counts:
+        if(count>0):
+            dexire_count_out += f"{feat}: {count}\n"
     # --- DexiRE-Evo ---
     best, test_acc, uncov_te, engine = get_dexire_evo_rules(
         feature_names, model, data
     )
     result_str = ""
-    result_str += "Rules in IF–ELIF–ELSE form (GA):\n"
-    result_str += "========================\n"
     result_str += format_if_elif_else(best, feature_names, engine.operator_set) + "\n"
     result_str += "========================\n"
     result_str += f"Fidelity (train vs model): {best.fitness.values[0]:.3f}\n"
-    result_str += f"# Predicates             : {best.fitness.values[1]}\n"
+    result_str += f"Predicates             : {best.fitness.values[1]}\n"
     result_str += f"Uncovered (train)        : {best.fitness.values[2]}\n"
     result_str += f"Test accuracy (matched)  : {test_acc:.3f} | Uncov test: {uncov_te}\n"
     dexire_evo_out = result_str
 
-    return dexire_out, dexire_evo_out, model, data, feature_names
+    return dexire_out, dexire_evo_out,dexire_count_out, model, data, feature_names
 
 
 # ─────────────────────────────────────────────
@@ -129,7 +134,6 @@ def save_results(dexire_text, dexire_evo_text):
     with open(filename, "w", encoding="utf-8") as f:
         f.write(content)
 
-    return filename  # gr.File will serve this
 
 
 # ─────────────────────────────────────────────
@@ -243,10 +247,15 @@ with gr.Blocks(title="XAI on the Wall") as main:
             run_instance_btn = gr.Button("Explain instance")
 
         # ── Outputs section ──
-        with gr.Column(scale=2):
+        with gr.Column(scale=3):
             gr.Markdown("### DexiRE")
             dexire_out = gr.Textbox(
                 label="DexiRE rules",
+                lines=10,
+            )
+            gr.Markdown("### DexiRE features usage counts")
+            dexire_count_out = gr.Textbox(
+                label="DexiRE features usage counts",
                 lines=10,
             )
 
@@ -257,10 +266,9 @@ with gr.Blocks(title="XAI on the Wall") as main:
             )
 
             # Save/download UI
-            save_btn = gr.Button("Save results to file")
-            saved_file = gr.File(label="Download saved results")
-
+            save_btn = gr.Button("Save DexiRE results to file")
             ciu_plot_out = gr.Plot(label="CIU plot")
+
 
     # ── Hook up visibility toggles ──
 
@@ -299,6 +307,7 @@ with gr.Blocks(title="XAI on the Wall") as main:
         outputs=[
             dexire_out,
             dexire_evo_out,
+            dexire_count_out,
             model_state_gr,
             data_state_gr,
             feature_names_gr,
@@ -321,7 +330,7 @@ with gr.Blocks(title="XAI on the Wall") as main:
     save_btn.click(
         fn=save_results,
         inputs=[dexire_out, dexire_evo_out],
-        outputs=[saved_file],
+        outputs=[],
     )
 
 main.launch()  # add share=True to have a public server

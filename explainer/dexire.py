@@ -3,6 +3,7 @@ from dexire.adapters.pytorch_adapter import PyTorchModelAdapter
 import numpy as np
 import re
 
+
 def make_sympy_safe_names(feature_names):
     safe_names = []
     mapping = {}
@@ -16,7 +17,7 @@ def make_sympy_safe_names(feature_names):
             safe = f"f{i}_{safe}"
 
         safe_names.append(safe)
-        mapping[safe] = name_str  
+        mapping[safe] = name_str
 
     return safe_names, mapping
 
@@ -42,4 +43,13 @@ def get_dexire_rules(model, data, feature_names):
     for safe, original in mapping.items():
         rules_str = rules_str.replace(safe, original)
 
-    return rules_str
+    feature_counts = {}
+    for original in feature_names:
+        name_str = str(original)
+        pattern = re.escape(name_str)
+        count = len(re.findall(pattern, rules_str))
+        feature_counts[name_str] = count
+    sorted_counts = sorted(feature_counts.items(), key=lambda x: x[1], reverse=True)
+    
+
+    return rules_str, sorted_counts
