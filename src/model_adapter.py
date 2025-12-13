@@ -2,13 +2,7 @@ import numpy as np
 import pandas as pd
 import torch
 
-
 class ModelAdapter:
-    """
-    Adapter for a single-output sigmoid PyTorch model.
-    Exposes .predict(X) -> 0/1 labels.
-    """
-
     def __init__(self, model, device=None, threshold=0.5):
         self.model = model
         self.threshold = threshold
@@ -29,16 +23,17 @@ class ModelAdapter:
         return torch.from_numpy(X_np).to(self.device)
 
     def predict(self, X):
-        """
-        Returns binary labels (0/1) by thresholding the model's sigmoid output.
-        """
         self.model.eval()
         with torch.no_grad():
             X_tensor = self._to_tensor(X)
-            y = self.model(X_tensor)      
-            y = y.view(-1)                  
-
-        probs = y.detach().cpu().numpy()
-        labels = (probs >= self.threshold).astype(int)  # 0 or 1
+            outputs = self.model(X_tensor)
+            
+            if outputs.shape[1] > 1:
+                _, predicted = torch.max(outputs, 1)
+                labels = predicted.cpu().numpy()
+            else:
+                outputs = outputs.view(-1)
+                probs = outputs.detach().cpu().numpy()
+                labels = (probs >= self.threshold).astype(int)
 
         return labels

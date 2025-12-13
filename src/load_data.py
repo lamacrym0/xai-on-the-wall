@@ -6,7 +6,7 @@ def load_data(dataset):
         case "Iris":
             X, y = load_iris(return_X_y=True)
             feature_names = load_iris().feature_names
-        case "Wine Quality":
+        case "Wine":
             X, y = load_wine(return_X_y=True)
             feature_names = load_wine().feature_names
         case "Breast Cancer":
