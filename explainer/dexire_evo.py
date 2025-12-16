@@ -1,6 +1,5 @@
 from dexire_evo.ga_engine import GAEngine
-from dexire_evo.rule_formatter import format_if_elif_else
-from sklearn.metrics import accuracy_score, classification_report
+from sklearn.metrics import accuracy_score
 from src.config import Config
 from src.model_adapter import ModelAdapter
 
@@ -26,4 +25,4 @@ def get_dexire_evo_rules(feature_names, model, data):
     mask = y_pred_te != -1
     test_acc = accuracy_score(y_test[mask], y_pred_te[mask]) if mask.any() else 0.0
 
-    return best, test_acc, uncov_te, engine
+    return best, test_acc, uncov_te, engine, len(best)

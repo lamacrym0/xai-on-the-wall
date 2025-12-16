@@ -115,14 +115,14 @@ def overwrite_run_logic(json_filename, data_state, layer_config, epochs, lr, see
     Overwrites an existing run (JSON, Model, Image) with the current state.
     """
     if not json_filename:
-        return "Error: No run selected to overwrite.", gr.update()
+        return "Error: No run selected to overwrite.", gr.update(), gr.update()
     
     if not model or not data_state:
-        return "Error: No model or data to save.", gr.update()
+        return "Error: No model or data to save.", gr.update(), gr.update()
 
     json_path = os.path.join(SAVES_DIR, json_filename)
     if not os.path.exists(json_path):
-        return f"Error: File {json_filename} not found.", gr.update()
+        return f"Error: File {json_filename} not found.", gr.update(), gr.update()
 
     # 1. LOAD EXISTING METADATA 
     try:
@@ -154,8 +154,7 @@ def overwrite_run_logic(json_filename, data_state, layer_config, epochs, lr, see
             img_obj = img_struct
         img_obj.save(image_path)
     except Exception as e:
-        print(f"Warning: Could not overwrite image: {e}")
-
+        return
     # 4. PREPARE DATASET CONFIG
     ds_config = data_state["config"].copy()
     if ds_config["source"] == "CSV File" and "path" in ds_config:
@@ -209,7 +208,7 @@ def overwrite_run_logic(json_filename, data_state, layer_config, epochs, lr, see
 def load_run_logic(json_filename):
 
     if not json_filename:
-        return [None] * 19 + [gr.update()] + [True]
+        return [None] * 19 + [gr.update()] + [None] * 6
 
     json_path = os.path.join(SAVES_DIR, json_filename)
     with open(json_path, "r", encoding="utf-8") as f:
@@ -284,16 +283,29 @@ def load_run_logic(json_filename):
 
     # D. XAI
     res = data["results"]
-
-    return (
-        data_state, model, data_dict, hist,
-        ui_rd, ui_dd, ui_file, ui_tgt, ui_info, fig_data,
-        tr["epochs"], tr["lr"], tr["seed"],
-        layer_state_list, fig_hist,
-        res["dexire"].get("rules", ""), res["dexire"].get("evo", ""),
-        f"Run loaded: {json_filename}",
-        img_struct,
-        gr.update(visible=True),
-        True,
-        gr.update(visible=False)
+    rules_text = res["dexire"].get("rules", "")
+    evo_text = res["dexire"].get("evo", "")
+    return (    
+        data_state, model, data_dict, hist, #st_data, st_model, st_datadict, st_hist
+        ui_rd, ui_dd, ui_file, ui_tgt, ui_info, fig_data, # rd_src, dd_skl, fl_csv, txt_tgt, lbl_data_info, plt_data
+        tr["epochs"], tr["lr"], tr["seed"], # nb_ep, nb_lr, nb_seed
+        layer_state_list, fig_hist, # st_layer, plt_train
+        gr.update(value=rules_text, max_lines=10), # txt_dex
+        gr.update(value=evo_text, max_lines=10), # txt_evo
+        f"Run loaded: {json_filename}", # lbl_load_info
+        img_struct, # img_struct
+        gr.update(visible=False),  # btn_save
+        True, # st_retrain
+        res["dexire"].get("mean",""), # txt_dex_mean
+        res["dexire"].get("sum",""), # txt_dex_sum
+        res["dexire"].get("rules_number",""), # txt_dex_rules_number
+        res["dexire"].get("evo_acuracy",""), # txt_dex_evo_acuracy
+        res["dexire"].get("evo_uncov",""), # txt_dex_evo_uncov
+        res["dexire"].get("evo_rules_number",""), # txt_dex_evo_rules_number
+        res["dexire"].get("evo_rules_length",""), # txt_dex_evo_rules_length
+        res["dexire"].get("rules_length",""), # txt_dex_rules_length
+        hist['val_acc'][len(hist['val_acc'])-1],hist['val_loss'][len(hist['val_loss'])-1],
+        res["dexire"].get("evo_sum",""), # txt_evo_sum
+        res["dexire"].get("evo_mean","")  # txt_evo_mean
     )
+#txt_dex_rules_number,txt_dex_evo_acuracy,txt_dex_evo_uncov,txt_dex_evo_rules_number

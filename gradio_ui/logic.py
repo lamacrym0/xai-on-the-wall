@@ -7,6 +7,7 @@ import pandas as pd
 import numpy as np
 import random
 from PIL import Image
+from explainer.dexire import make_sympy_safe_names
 
 from src.model_builder import build_mlp_from_layer_df
 from src.train import train
@@ -96,10 +97,37 @@ def format_dexire_output(rules_str):
         formatted.append(rule_text)
         
     return "\n\n".join(formatted)
+def count_mean_features(ruleset, feature_names):
+    feature_means = {}
+    feature_counts = {}
+
+    for rule in ruleset:
+        for f_idx, threshold, op_idx in rule[:-1]:
+            
+            if 0 <= f_idx < len(feature_names):
+                name = feature_names[f_idx]
+                
+                value = abs(float(threshold))
+                
+                if name in feature_counts:
+                    feature_counts[name] += 1
+                    feature_means[name] += value
+                else:
+                    feature_counts[name] = 1
+                    feature_means[name] = value
+
+    for feature, total_val in feature_means.items():
+        count = feature_counts[feature]
+        if count > 0:
+            feature_means[feature] = total_val / count
+
+    sorted_means = sorted(feature_means.items(), key=lambda x: x[1], reverse=True)
+    sorted_counts = sorted(feature_counts.items(), key=lambda x: x[1], reverse=True)
+
+    return sorted_means, sorted_counts
 
 def format_dexire_evo_output(ruleset, feature_names, operator_set):
     ordered = sorted(ruleset, key=lambda r: len(r) - 1, reverse=True)
-
     lines = []
     for r in ordered:
         conds = "\n    AND ".join(
@@ -111,7 +139,6 @@ def format_dexire_evo_output(ruleset, feature_names, operator_set):
             lines.append(f"{prefix} {conds}\n  THEN {r[-1][1]}\n")
         else:
             lines.append(f"{prefix}\n  THEN {r[-1][1]}\n")
-
     return "\n".join(lines)
 
 def load_data_ui(source, name, file_obj, target_col):
@@ -133,7 +160,7 @@ def load_data_ui(source, name, file_obj, target_col):
     plt.close(fig)
     
     st = {"X": X.tolist(), "y": y.tolist(), "features": feats, "config": cfg}
-    return st, f"Loaded: {len(X)} rows", fig, gr.update(visible=False)
+    return st, f"Loaded: {len(X)} rows", fig, gr.update(visible=False),gr.update(visible=True),gr.update(value=None),gr.update(value=None),"",""
 
 def train_ui(data_st, layers_list, ep, lr, seed, optim_name, loss_name, use_wandb):
     if not data_st: return [None] * 7 + [seed]
@@ -149,8 +176,6 @@ def train_ui(data_st, layers_list, ep, lr, seed, optim_name, loss_name, use_wand
     num_classes = len(unique_classes)
     output_size = num_classes if num_classes > 2 else 1
     
-    print(f"Building model for {num_classes} classes (Output Size: {output_size})")
-
     # 2. Build model
     model = build_mlp_from_layer_df(X.shape[1], layers_list, output_size=output_size)
     model.input_size = X.shape[1]
@@ -176,14 +201,13 @@ def train_ui(data_st, layers_list, ep, lr, seed, optim_name, loss_name, use_wand
     try:
         viz_path = visualize_model_matplotlib(model)
     except Exception as e:
-        print(f"Erreur Viz: {e}")
         viz_path = None
     return (
         model, d_dict, hist, fig, viz_path, 
         "", "", None, 
         generated_seed,
         gr.update(visible=True),
-        ""
+        "",None,"","",gr.update(visible=True),"","","","",hist['val_acc'][len(hist['val_acc'])-1],hist['val_loss'][len(hist['val_loss'])-1]
     )
 
 def run_ciu(idx, mod, d_dict, d_st):
@@ -211,19 +235,22 @@ def run_ciu(idx, mod, d_dict, d_st):
     X_test_df = pd.DataFrame(d_dict["X_test"], columns=feats)
     
     if int(idx) >= len(X_test_df): 
-        print(f"Index {idx} hors limites (Max: {len(X_test_df)-1})")
         return None
     
     instance = X_test_df.iloc[[int(idx)]]
-    
     try:
         res = get_ciu_instance(ciu, instance)
+    
+        fig_influance = ciu.plot_influence(res,figsize=(9, 6)) 
         fig = ciu.plot_ciu(res, figsize=(9, 6))
         fig.subplots_adjust(left=0.25)
+        fig_influance.subplots_adjust(left=0.25)
+        ax = fig_influance.axes[0]
+        ax.set_xlim(-0.1, 0.1)
+        plt.close(fig_influance)
         ax = fig.axes[0]
         ax.set_xlim(0, 0.25) 
         plt.close(fig)
-        return fig
+        return fig, fig_influance
     except Exception as e:
-        print(f"Erreur CIU: {e}")
-        return None
+        return None,None

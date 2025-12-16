@@ -94,8 +94,6 @@ def train(X, y, epochs=50, lr=0.001, model=None, random_seed=42,
     elif optimizer_name == "RMSprop": optimizer = optim.RMSprop(model.parameters(), lr=lr)
     else: optimizer = optim.Adam(model.parameters(), lr=lr)
 
-    print(f"Training Config: Multiclass={is_multiclass}, Classes={num_classes}, Loss={loss_name}, Optim={optimizer_name}")
-
     history = {"train_loss": [], "train_acc": [], "val_loss": [], "val_acc": [], "epochs": []}
     
     run = None
